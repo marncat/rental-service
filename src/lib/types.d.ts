@@ -1,9 +1,16 @@
-interface Item {
+interface RentInfo {
+	renterName: string | null;
+	rentalStartDate: string | null;
+	rentalEndDate: string | null;
+}
+
+interface Item extends RentInfo {
 	id: number;
 	name: string;
 	category: string;
 	isRented: boolean;
-	renterName: string | null;
-	rentalStartDate: string | null;
-	rentalEndDate: string | null;
+}
+
+interface BookInfo extends RentInfo {
+	rentingItem: number;
 }
