@@ -37,6 +37,16 @@
 		await fetchItems();
 	}
 
+	async function deleteItem(itemId: number) {
+		if (confirm("정말로 이 품목을 삭제하시겠습니까?")) {
+			await fetch(`/api/items/${itemId}`, {
+				method: "DELETE",
+			});
+			await fetchItems();
+			alert("품목이 삭제되었습니다.");
+		}
+	}
+
 	onMount(() => {
 		fetchItems();
 	});
@@ -66,5 +76,11 @@
 		{:else}
 			✅ <b>대여 가능</b>
 		{/if}
+		<button
+			onclick={() => deleteItem(item.id)}
+			style="background: none; border: none; cursor: pointer;"
+		>
+			🗑️
+		</button>
 	</div>
 {/each}
