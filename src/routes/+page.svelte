@@ -55,8 +55,22 @@
 			}) => {
 				waitingItems.push(item.id);
 				const date = formData.get("date");
+				let latestDate = new Date();
+				if (item.isRented) {
+					latestDate = new Date(item.rentalEndDate!);
+					latestDate.setDate(latestDate.getDate() + 1);
+				}
 
-				if (isEarlierThan(new Date(date as string), new Date())) {
+				if (bookings.get(item.id)) {
+					let bookingArr = bookings.get(item.id)!;
+					latestDate = new Date(
+						bookingArr[bookingArr.length - 1].rentalEndDate!
+					);
+					latestDate.setDate(latestDate.getDate() + 1);
+				}
+				console.log(latestDate);
+
+				if (isEarlierThan(new Date(date as string), latestDate)) {
 					showWarning.push(item.id);
 					waitingItems = waitingItems.filter(
 						(value) => value !== item.id
@@ -84,9 +98,9 @@
 			<div>
 				{#if item.isRented}
 					{#if isEarlierThan(new Date(item.rentalEndDate!), new Date())}
-						🔓 대여 기한 초과 - {item.renterName} (반납 예정일: {item.rentalEndDate})
+						🔓 대여 기한 초과 - {item.renterName} (대여 종료일: {item.rentalEndDate})
 					{:else}
-						🔒 대여 중 - {item.renterName} (반납 예정일: {item.rentalEndDate})
+						🔒 대여 중 - {item.renterName} (대여 종료일: {item.rentalEndDate})
 					{/if}
 				{:else}
 					✅ 대여 가능
@@ -99,7 +113,7 @@
 				<input name="isRented" value={item.isRented} type="hidden" />
 				이름:
 				<input name="name" required />
-				반납일:
+				대여 종료일:
 				<input type="date" name="date" required />
 				<button type="submit"
 					>{item.isRented ? "예약" : "대여"}하기</button
@@ -115,7 +129,7 @@
 								{#each bookings.get(item.id) ?? [] as booking}
 									<li>
 										<strong>{booking.renterName}</strong> -
-										반납일: {booking.rentalEndDate}
+										대여 종료일: {booking.rentalEndDate}
 									</li>
 								{/each}
 							</ul>
@@ -124,7 +138,12 @@
 				{/if}
 				{#if showWarning.includes(item.id)}
 					<p style="color: red;">
-						반납일은 오늘 이전의 날짜로 설정할 수 없습니다.
+						{#if item.isRented}
+							예약 시 대여 종료일은 마지막 대여/예약의 대여 종료일
+							이후로 선택해야 합니다.
+						{:else}
+							대여 종료일은 오늘 이전의 날짜로 설정할 수 없습니다.
+						{/if}
 					</p>
 				{/if}
 			{/if}

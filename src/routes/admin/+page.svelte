@@ -113,9 +113,9 @@
 
 			{#if item.isRented}
 				{#if isEarlierThan(new Date(item.rentalEndDate!), new Date())}
-					🔓 대여 기한 초과 - {item.renterName} (반납 예정일: {item.rentalEndDate})
+					🔓 대여 기한 초과 - {item.renterName} (대여 종료일: {item.rentalEndDate})
 				{:else}
-					🔒 대여 중 - {item.renterName} (반납 예정일: {item.rentalEndDate})
+					🔒 대여 중 - {item.renterName} (대여 종료일: {item.rentalEndDate})
 				{/if}
 				<button onclick={() => returnItem(item.id)}>반납 처리</button>
 			{:else}
@@ -139,8 +139,8 @@
 						<ul>
 							{#each bookings.get(item.id) ?? [] as booking}
 								<li>
-									<strong>{booking.renterName}</strong> -
-									반납일: {booking.rentalEndDate}
+									<strong>{booking.renterName}</strong> - 대여
+									종료일: {booking.rentalEndDate}
 									<button
 										onclick={() =>
 											deleteBooking(booking.id)}
