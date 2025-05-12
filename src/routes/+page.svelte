@@ -68,7 +68,6 @@
 					);
 					latestDate.setDate(latestDate.getDate() + 1);
 				}
-				console.log(latestDate);
 
 				if (isEarlierThan(new Date(date as string), latestDate)) {
 					showWarning.push(item.id);

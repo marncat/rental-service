@@ -13,8 +13,6 @@ export const actions: Actions = {
 		if (!rawItemId || !name || !date) return;
 		const itemId = parseInt(rawItemId as string);
 
-		console.log("Waiting...");
-
 		if (isRented) {
 			await db.insert(bookings).values({
 				renterName: name as string,
@@ -32,9 +30,7 @@ export const actions: Actions = {
 					rentalEndDate: date as string,
 				})
 				.where(eq(items.id, itemId));
-		}
-
-		console.log("Done!");
+		}r
 
 		return { success: true };
 	},
