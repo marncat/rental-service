@@ -41,8 +41,6 @@
 
 <h1>대여 가능한 품목 목록</h1>
 
-{waitingItems}
-
 {#each items as item}
 	<div style="border: 1px solid #ccc; padding: 1rem; margin: 1rem 0;">
 		<strong>{item.name}</strong> ({item.category})<br />

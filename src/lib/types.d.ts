@@ -14,3 +14,8 @@ interface Item extends RentInfo {
 interface BookInfo extends RentInfo {
 	rentingItem: number;
 }
+
+interface Booking extends RentInfo {
+	rentingItem: number;
+	id: number;
+}
