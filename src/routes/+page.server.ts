@@ -30,7 +30,7 @@ export const actions: Actions = {
 					rentalEndDate: date as string,
 				})
 				.where(eq(items.id, itemId));
-		}r
+		}
 
 		return { success: true };
 	},
