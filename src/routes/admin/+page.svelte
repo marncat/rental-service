@@ -6,6 +6,7 @@
 	let form = $state({ name: "", category: "" });
 	let items: Item[] = $state([]);
 	let bookings: Map<number, Booking[]> = $state(new Map());
+	let waitingItems: number[] = $state([]);
 
 	async function fetchItems() {
 		const res = await fetch("/api/items");
@@ -123,16 +124,26 @@
 
 {#each items as item}
 	<div style="border: 1px solid #ccc; padding: 1rem; margin: 1rem 0;">
-		<div>
-			<strong>{item.name}</strong> ({item.category})<br />
+		<strong>{item.name}</strong> ({item.category})<br />
 
+		{#if waitingItems.includes(item.id)}
+			처리 중...
+		{:else}
 			{#if item.isRented}
 				{#if isEarlierThan(new Date(item.rentalEndDate!), new Date())}
 					🔓 대여 기한 초과 - {item.renterName} (대여 종료일: {item.rentalEndDate})
 				{:else}
 					🔒 대여 중 - {item.renterName} (대여 종료일: {item.rentalEndDate})
 				{/if}
-				<button onclick={() => returnItem(item.id)}>반납 처리</button>
+				<button
+					onclick={async () => {
+						waitingItems.push(item.id);
+						await returnItem(item.id);
+						waitingItems = waitingItems.filter(
+							(value) => value !== item.id
+						);
+					}}>반납 처리</button
+				>
 			{:else}
 				✅ <b>대여 가능</b>
 			{/if}
@@ -142,7 +153,7 @@
 			>
 				🗑️
 			</button>
-		</div>
+		{/if}
 		<div>
 			{#if item.isRented}
 				{#if (bookings.get(item.id) ?? []).length > 0}
