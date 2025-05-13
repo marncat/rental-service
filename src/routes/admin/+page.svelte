@@ -99,11 +99,11 @@
 </script>
 
 <div
-	style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;"
+	style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 1rem;"
 >
 	<h1>🐞 헥사포다 관리자</h1>
 	<form action="/admin/logout" method="POST" use:enhance>
-		<button type="submit">로그아웃</button>
+		<button type="submit" style="margin-right: auto;">로그아웃</button>
 	</form>
 </div>
 
@@ -219,19 +219,6 @@
 
 	button:active {
 		background-color: #d0d0d0;
-	}
-
-	button[style*="background: none"] {
-		padding: 0;
-		border: none;
-		background: none;
-		cursor: pointer;
-	}
-
-	h1,
-	h2 {
-		font-family: Arial, sans-serif;
-		color: #333;
 	}
 
 	.item {
