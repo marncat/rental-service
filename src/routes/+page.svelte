@@ -39,7 +39,7 @@
 	});
 </script>
 
-<h1>대여 가능한 품목 목록</h1>
+<h1>🔍 물품 대여 조회</h1>
 
 {#each items as item}
 	<div style="border: 1px solid #ccc; padding: 1rem; margin: 1rem 0;">
@@ -97,20 +97,37 @@
 				};
 			}}
 		>
-			<div>
-				{#if item.isRented}
+			{#if item.isRented}
+				<p style="margin-top: 8px; margin-bottom: 4px">
 					{#if isEarlierThan(new Date(item.rentalEndDate!), new Date())}
 						🔓 대여 기한 초과 - {item.renterName} (대여 종료일: {item.rentalEndDate})
 					{:else}
 						🔒 대여 중 - {item.renterName} (대여 종료일: {item.rentalEndDate})
 					{/if}
-				{:else}
-					✅ 대여 가능
-				{/if}
-			</div>
+				</p>
+			{:else}
+				<p style="margin-top: 8px; margin-bottom: 16px">✅ 대여 가능</p>
+			{/if}
 			{#if waitingItems.includes(item.id)}
 				처리 중...
 			{:else}
+				{#if item.isRented}
+					{#if (bookings.get(item.id) ?? []).length > 0}
+						<details style="margin-bottom:16px; margin-left:16px">
+							<summary>
+								📅 예약: {(bookings.get(item.id) ?? []).length}
+							</summary>
+							<ul style="margin-top: 0">
+								{#each bookings.get(item.id) ?? [] as booking}
+									<li>
+										<strong>{booking.renterName}</strong> -
+										대여 종료일: {booking.rentalEndDate}
+									</li>
+								{/each}
+							</ul>
+						</details>
+					{/if}
+				{/if}
 				<input name="itemId" value={item.id} type="hidden" />
 				<input name="isRented" value={item.isRented} type="hidden" />
 				<div>
@@ -124,24 +141,7 @@
 				<button type="submit"
 					>{item.isRented ? "예약" : "대여"}하기</button
 				>
-				{#if item.isRented}
-					{#if (bookings.get(item.id) ?? []).length > 0}
-						<details>
-							<summary
-								>예약: {(bookings.get(item.id) ?? [])
-									.length}</summary
-							>
-							<ul>
-								{#each bookings.get(item.id) ?? [] as booking}
-									<li>
-										<strong>{booking.renterName}</strong> -
-										대여 종료일: {booking.rentalEndDate}
-									</li>
-								{/each}
-							</ul>
-						</details>
-					{/if}
-				{/if}
+
 				{#if showWarning.includes(item.id)}
 					<p style="color: red;">
 						{#if item.isRented}
@@ -156,3 +156,45 @@
 		</form>
 	</div>
 {/each}
+
+<style>
+	input {
+		padding: 0.3rem;
+		border: none;
+		border-bottom: 1px solid #ccc;
+		font-size: 0.9rem;
+		width: 50%;
+		box-sizing: border-box;
+		outline: none;
+		transition: border-color 0.3s ease;
+		font-family: "Roboto", sans-serif;
+	}
+
+	input:focus {
+		border-bottom: 1px solid #666;
+	}
+
+	button {
+		padding: 0.3rem 0.6rem;
+		border: none;
+		border-radius: 4px;
+		background-color: #f0f0f0;
+		color: #333;
+		font-size: 0.9rem;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+		font-family: "Roboto", sans-serif;
+	}
+
+	button:hover {
+		background-color: #e0e0e0;
+	}
+
+	button:active {
+		background-color: #d0d0d0;
+	}
+
+	div {
+		margin-bottom: 0.8rem;
+	}
+</style>

@@ -101,7 +101,7 @@
 <div
 	style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;"
 >
-	<h1>관리자</h1>
+	<h1>🐞 헥사포다 관리자</h1>
 	<form action="/admin/logout" method="POST" use:enhance>
 		<button type="submit">로그아웃</button>
 	</form>
@@ -123,56 +123,55 @@
 <h2>📋 전체 품목 목록</h2>
 
 {#each items as item}
-	<div style="border: 1px solid #ccc; padding: 1rem; margin: 1rem 0;">
+	<div class="item">
 		<strong>{item.name}</strong> ({item.category})<br />
 
 		{#if waitingItems.includes(item.id)}
 			처리 중...
 		{:else}
-			{#if item.isRented}
-				{#if isEarlierThan(new Date(item.rentalEndDate!), new Date())}
-					🔓 대여 기한 초과 - {item.renterName} (대여 종료일: {item.rentalEndDate})
+			<div style="margin-top: 8px;">
+				{#if item.isRented}
+					{#if isEarlierThan(new Date(item.rentalEndDate!), new Date())}
+						🔓 대여 기한 초과 - {item.renterName} (대여 종료일: {item.rentalEndDate})
+					{:else}
+						🔒 대여 중 - {item.renterName} (대여 종료일: {item.rentalEndDate})
+					{/if}
+					<button
+						onclick={async () => {
+							waitingItems.push(item.id);
+							await returnItem(item.id);
+							waitingItems = waitingItems.filter(
+								(value) => value !== item.id
+							);
+						}}>반납 처리</button
+					>
 				{:else}
-					🔒 대여 중 - {item.renterName} (대여 종료일: {item.rentalEndDate})
+					✅ <b>대여 가능</b>
 				{/if}
-				<button
-					onclick={async () => {
-						waitingItems.push(item.id);
-						await returnItem(item.id);
-						waitingItems = waitingItems.filter(
-							(value) => value !== item.id
-						);
-					}}>반납 처리</button
-				>
-			{:else}
-				✅ <b>대여 가능</b>
-			{/if}
-			<button
-				onclick={() => deleteItem(item.id)}
-				style="background: none; border: none; cursor: pointer;"
-			>
-				🗑️
-			</button>
+
+				<button onclick={() => deleteItem(item.id)}>삭제</button>
+			</div>
 		{/if}
 		<div>
 			{#if item.isRented}
 				{#if (bookings.get(item.id) ?? []).length > 0}
-					<details>
+					<details
+						style="margin-bottom:16px; margin-left:16px; margin-top:8px"
+					>
 						<summary
-							>예약: {(bookings.get(item.id) ?? [])
+							>📅 예약: {(bookings.get(item.id) ?? [])
 								.length}</summary
 						>
-						<ul>
+						<ul style="margin-top: 8px">
 							{#each bookings.get(item.id) ?? [] as booking}
-								<li>
+								<li style="margin-bottom: 8px;">
 									<strong>{booking.renterName}</strong> - 대여
 									종료일: {booking.rentalEndDate}
 									<button
 										onclick={() =>
 											deleteBooking(booking.id)}
-										style="background: none; border: none; cursor: pointer;"
 									>
-										🗑️
+										삭제
 									</button>
 								</li>
 							{/each}
@@ -183,3 +182,62 @@
 		</div>
 	</div>
 {/each}
+
+<style>
+	input {
+		font-family: "Roboto", sans-serif;
+		padding: 0.3rem;
+		border: none;
+		border-bottom: 1px solid #ccc;
+		font-size: 0.9rem;
+		width: 50%;
+		box-sizing: border-box;
+		margin-bottom: 0.8rem;
+		outline: none;
+		transition: border-color 0.3s ease;
+	}
+
+	button {
+		font-family: "Roboto", sans-serif;
+		padding: 0.3rem 0.6rem;
+		border: none;
+		border-radius: 4px;
+		background-color: #f0f0f0;
+		color: #333;
+		font-size: 0.9rem;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+	}
+
+	input:focus {
+		border-bottom: 1px solid #666;
+	}
+
+	button:hover {
+		background-color: #e0e0e0;
+	}
+
+	button:active {
+		background-color: #d0d0d0;
+	}
+
+	button[style*="background: none"] {
+		padding: 0;
+		border: none;
+		background: none;
+		cursor: pointer;
+	}
+
+	h1,
+	h2 {
+		font-family: Arial, sans-serif;
+		color: #333;
+	}
+
+	.item {
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		padding: 0.8rem;
+		margin: 0.8rem 0;
+	}
+</style>
