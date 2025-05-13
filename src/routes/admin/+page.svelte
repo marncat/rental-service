@@ -109,8 +109,12 @@
 <h2>📋 품목 추가</h2>
 <div style="border: 1px solid #ccc; padding: 1rem; margin-bottom: 2rem; ">
 	<form onsubmit={addItem}>
-		품목 이름: <input bind:value={form.name} required />
-		분류: <input bind:value={form.category} required />
+		<div>
+			품목 이름: <input bind:value={form.name} required />
+		</div>
+		<div>
+			분류: <input bind:value={form.category} required />
+		</div>
 		<button type="submit">추가</button>
 	</form>
 </div>
