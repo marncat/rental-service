@@ -1,4 +1,4 @@
-import { type Actions } from "@sveltejs/kit";
+import { fail, type Actions } from "@sveltejs/kit";
 import { db } from "$lib/server/db";
 import { bookings, items } from "$lib/server/db/schema";
 import { eq } from "drizzle-orm";
@@ -21,6 +21,17 @@ export const actions: Actions = {
 				rentingItem: itemId,
 			});
 		} else {
+			const item = await db
+				.select({
+					isRented: items.isRented,
+				})
+				.from(items)
+				.where(eq(items.id, itemId));
+			if (item[0].isRented) {
+				return fail(400, {
+					late: true,
+				});
+			}
 			await db
 				.update(items)
 				.set({

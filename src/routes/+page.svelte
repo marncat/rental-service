@@ -85,6 +85,9 @@
 				// `submitter` is the `HTMLElement` that caused the form to be submitted
 
 				return async ({ result, update }) => {
+					if (result.type === "failure") {
+						alert("이미 대여된 물품입니다.");
+					}
 					// `result` is an `ActionResult` object
 					// `update` is a function which triggers the default logic that would be triggered if this callback wasn't set
 					sync();
