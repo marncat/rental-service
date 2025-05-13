@@ -113,10 +113,14 @@
 			{:else}
 				<input name="itemId" value={item.id} type="hidden" />
 				<input name="isRented" value={item.isRented} type="hidden" />
-				이름:
-				<input name="name" required />
-				대여 종료일:
-				<input type="date" name="date" required />
+				<div>
+					이름:
+					<input name="name" required />
+				</div>
+				<div>
+					대여 종료일:
+					<input type="date" name="date" required />
+				</div>
 				<button type="submit"
 					>{item.isRented ? "예약" : "대여"}하기</button
 				>
