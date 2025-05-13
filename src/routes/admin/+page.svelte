@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from "$app/forms";
 	import { isEarlierThan } from "$lib/date-logic";
 	import { onMount } from "svelte";
 
@@ -97,6 +98,9 @@
 </script>
 
 <h1>관리자 - 품목 추가</h1>
+<form action="/admin/logout" method="POST" use:enhance>
+	<button type="submit">로그아웃</button>
+</form>
 
 <form onsubmit={addItem} style="margin-bottom: 2rem;">
 	품목 이름: <input bind:value={form.name} required />
