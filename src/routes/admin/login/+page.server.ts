@@ -13,7 +13,7 @@ export const actions: Actions = {
 				path: "/",
 				httpOnly: true,
 				sameSite: "strict",
-				secure: false, // 배포 시 true
+				secure: true,
 				maxAge: 60 * 60,
 			});
 			throw redirect(303, "/admin");

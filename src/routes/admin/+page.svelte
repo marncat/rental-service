@@ -183,6 +183,10 @@
 	</div>
 {/each}
 
+<svelte:head>
+	<title>Hexapoda Renting Manage</title>
+</svelte:head>
+
 <style>
 	input {
 		font-family: "Roboto", sans-serif;

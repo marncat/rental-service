@@ -157,6 +157,10 @@
 	</div>
 {/each}
 
+<svelte:head>
+	<title>Hexapoda Renting Home</title>
+</svelte:head>
+
 <style>
 	input {
 		padding: 0.3rem;

@@ -29,6 +29,10 @@
 	{/if}
 </form>
 
+<svelte:head>
+	<title>Hexapoda Renting Manage</title>
+</svelte:head>
+
 <style>
 	input,
 	button {
