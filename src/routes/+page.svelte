@@ -171,7 +171,6 @@
 		box-sizing: border-box;
 		outline: none;
 		transition: border-color 0.3s ease;
-		font-family: "Roboto", sans-serif;
 	}
 
 	input:focus {
@@ -187,7 +186,6 @@
 		font-size: 0.9rem;
 		cursor: pointer;
 		transition: background-color 0.3s ease;
-		font-family: "Roboto", sans-serif;
 	}
 
 	button:hover {

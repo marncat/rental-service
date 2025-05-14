@@ -189,7 +189,6 @@
 
 <style>
 	input {
-		font-family: "Roboto", sans-serif;
 		padding: 0.3rem;
 		border: none;
 		border-bottom: 1px solid #ccc;
@@ -202,7 +201,6 @@
 	}
 
 	button {
-		font-family: "Roboto", sans-serif;
 		padding: 0.3rem 0.6rem;
 		border: none;
 		border-radius: 4px;
