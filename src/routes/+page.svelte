@@ -1,12 +1,17 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { isEarlierThan } from "$lib/date-logic";
+	import ItemInfo from "$lib/components/item-info.svelte";
+	import { getCurrent } from "$lib/date-logic";
+	import flatpickr from "flatpickr";
+	import type { Instance } from "flatpickr/dist/types/instance";
 	import { onMount } from "svelte";
 
 	let items: Item[] = $state([]);
 	let bookings: Map<number, RentInfo[]> = $state(new Map());
+
+	let currentRents: Map<number, RentInfo> = $derived(getCurrent(bookings));
 	let waitingItems: number[] = $state([]);
-	let showWarning: number[] = $state([]);
+	let flatpickrs: Map<number, Instance> = new Map();
 
 	async function fetchItems() {
 		const res = await fetch("/api/items");
@@ -32,6 +37,23 @@
 		fetchItems();
 	}
 
+	function getDisabledDates(bookings: RentInfo[]): string[] {
+		const dates: string[] = [];
+		for (const b of bookings) {
+			if (!b.rentalStartDate || !b.rentalEndDate) continue;
+			const start = new Date(b.rentalStartDate);
+			const end = new Date(b.rentalEndDate);
+			for (
+				let d = new Date(start);
+				d <= end;
+				d.setDate(d.getDate() + 1)
+			) {
+				dates.push(d.toISOString().slice(0, 10)); // YYYY-MM-DD 형식
+			}
+		}
+		return dates;
+	}
+
 	onMount(() => {
 		sync();
 		const interval = setInterval(sync, 5000);
@@ -54,30 +76,6 @@
 				submitter,
 			}) => {
 				waitingItems.push(item.id);
-				const date = formData.get("date");
-				let latestDate = new Date();
-				if (item.isRented) {
-					latestDate = new Date(item.rentalEndDate!);
-					latestDate.setDate(latestDate.getDate() + 1);
-				}
-
-				if (bookings.get(item.id)) {
-					let bookingArr = bookings.get(item.id)!;
-					latestDate = new Date(
-						bookingArr[bookingArr.length - 1].rentalEndDate!
-					);
-					latestDate.setDate(latestDate.getDate() + 1);
-				}
-
-				if (isEarlierThan(new Date(date as string), latestDate)) {
-					showWarning.push(item.id);
-					waitingItems = waitingItems.filter(
-						(value) => value !== item.id
-					);
-					return cancel();
-				}
-				showWarning = showWarning.filter((value) => value !== item.id);
-
 				// `formElement` is this `<form>` element
 				// `formData` is its `FormData` object that's about to be submitted
 				// `action` is the URL to which the form is posted
@@ -97,61 +95,59 @@
 				};
 			}}
 		>
-			{#if item.isRented}
-				<p style="margin-top: 8px; margin-bottom: 4px">
-					{#if isEarlierThan(new Date(item.rentalEndDate!), new Date())}
-						🔓 대여 기한 초과 - {item.renterName} (대여 종료일: {item.rentalEndDate})
-					{:else}
-						🔒 대여 중 - {item.renterName} (대여 종료일: {item.rentalEndDate})
-					{/if}
-				</p>
-			{:else}
-				<p style="margin-top: 8px; margin-bottom: 16px">✅ 대여 가능</p>
-			{/if}
+			<ItemInfo {currentRents} itemId={item.id} />
 			{#if waitingItems.includes(item.id)}
 				처리 중...
 			{:else}
-				{#if item.isRented}
-					{#if (bookings.get(item.id) ?? []).length > 0}
-						<details style="margin-bottom:16px; margin-left:16px">
-							<summary>
-								📅 예약: {(bookings.get(item.id) ?? []).length}
-							</summary>
-							<ul style="margin-top: 0">
-								{#each bookings.get(item.id) ?? [] as booking}
-									<li>
-										<strong>{booking.renterName}</strong> -
-										대여 종료일: {booking.rentalEndDate}
-									</li>
-								{/each}
-							</ul>
-						</details>
-					{/if}
+				{#if (bookings.get(item.id) ?? []).length > 0}
+					<details style="margin-bottom:16px; margin-left:16px">
+						<summary>
+							📅 예약: {(bookings.get(item.id) ?? []).length}
+						</summary>
+						<ul style="margin-top: 0">
+							{#each bookings.get(item.id) ?? [] as booking}
+								<li>
+									<strong>{booking.renterName}</strong> - 대여
+									종료일: {booking.rentalEndDate}
+								</li>
+							{/each}
+						</ul>
+					</details>
 				{/if}
-				<input name="itemId" value={item.id} type="hidden" />
-				<input name="isRented" value={item.isRented} type="hidden" />
-				<div>
-					이름:
-					<input name="name" required />
+				<div class="reservation-form">
+					<input name="itemId" value={item.id} type="hidden" />
+					<div class="form-row">
+						<label for={`name${item.id}`}>이름</label>
+						<input name="name" id={`name${item.id}`} required />
+					</div>
+					<div class="form-row">
+						<label for={`range${item.id}`}>예약 기간</label>
+						<input
+							type="text"
+							name="date"
+							id={`range${item.id}`}
+							placeholder="YYYY-MM-DD to YYYY-MM-DD"
+							onfocus={() => {
+								if (flatpickrs.has(item.id)) {
+									const fp = flatpickrs.get(item.id);
+									fp?.destroy();
+								}
+								const fp = flatpickr(`#range${item.id}`, {
+									mode: "range",
+									minDate: "today",
+									dateFormat: "Y-m-d",
+									disable: getDisabledDates(
+										bookings.get(item.id) ?? []
+									),
+								});
+								flatpickrs.set(item.id, fp as Instance);
+							}}
+						/>
+					</div>
+					<div class="form-row" style="justify-content: flex-end;">
+						<button type="submit"> 예약하기 </button>
+					</div>
 				</div>
-				<div>
-					대여 종료일:
-					<input type="date" name="date" required />
-				</div>
-				<button type="submit"
-					>{item.isRented ? "예약" : "대여"}하기</button
-				>
-
-				{#if showWarning.includes(item.id)}
-					<p style="color: red;">
-						{#if item.isRented}
-							예약 시 대여 종료일은 마지막 대여/예약의 대여 종료일
-							이후로 선택해야 합니다.
-						{:else}
-							대여 종료일은 오늘 이전의 날짜로 설정할 수 없습니다.
-						{/if}
-					</p>
-				{/if}
 			{/if}
 		</form>
 	</div>

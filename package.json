@@ -35,6 +35,7 @@
 	},
 	"dependencies": {
 		"@libsql/client": "^0.14.0",
-		"drizzle-orm": "^0.40.0"
+		"drizzle-orm": "^0.40.0",
+		"flatpickr": "^4.6.13"
 	}
 }

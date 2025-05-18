@@ -21,7 +21,6 @@ export async function POST({ request }) {
 	await db.insert(items).values({
 		name,
 		category,
-		isRented: false,
 	});
 
 	return new Response("Item added", { status: 201 });

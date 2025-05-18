@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { isEarlierThan } from "$lib/date-logic";
+	import ItemInfo from "$lib/components/item-info.svelte";
+	import { getCurrent } from "$lib/date-logic";
 	import { onMount } from "svelte";
 
 	let form = $state({ name: "", category: "" });
 	let items: Item[] = $state([]);
+
 	let bookings: Map<number, Booking[]> = $state(new Map());
+	let currentRents: Map<number, RentInfo> = $derived(getCurrent(bookings));
 	let waitingItems: number[] = $state([]);
 
 	async function fetchItems() {
@@ -130,54 +133,33 @@
 			처리 중...
 		{:else}
 			<div style="margin-top: 8px;">
-				{#if item.isRented}
-					{#if isEarlierThan(new Date(item.rentalEndDate!), new Date())}
-						🔓 대여 기한 초과 - {item.renterName} (대여 종료일: {item.rentalEndDate})
-					{:else}
-						🔒 대여 중 - {item.renterName} (대여 종료일: {item.rentalEndDate})
-					{/if}
-					<button
-						onclick={async () => {
-							waitingItems.push(item.id);
-							await returnItem(item.id);
-							waitingItems = waitingItems.filter(
-								(value) => value !== item.id
-							);
-						}}>반납 처리</button
-					>
-				{:else}
-					✅ <b>대여 가능</b>
-				{/if}
-
+				<ItemInfo {currentRents} itemId={item.id} />
 				<button onclick={() => deleteItem(item.id)}>삭제</button>
 			</div>
 		{/if}
 		<div>
-			{#if item.isRented}
-				{#if (bookings.get(item.id) ?? []).length > 0}
-					<details
-						style="margin-bottom:16px; margin-left:16px; margin-top:8px"
+			{#if (bookings.get(item.id) ?? []).length > 0}
+				<details
+					style="margin-bottom:16px; margin-left:16px; margin-top:8px"
+				>
+					<summary
+						>📅 예약: {(bookings.get(item.id) ?? [])
+							.length}</summary
 					>
-						<summary
-							>📅 예약: {(bookings.get(item.id) ?? [])
-								.length}</summary
-						>
-						<ul style="margin-top: 8px">
-							{#each bookings.get(item.id) ?? [] as booking}
-								<li style="margin-bottom: 8px;">
-									<strong>{booking.renterName}</strong> - 대여
-									종료일: {booking.rentalEndDate}
-									<button
-										onclick={() =>
-											deleteBooking(booking.id)}
-									>
-										삭제
-									</button>
-								</li>
-							{/each}
-						</ul>
-					</details>
-				{/if}
+					<ul style="margin-top: 8px">
+						{#each bookings.get(item.id) ?? [] as booking}
+							<li style="margin-bottom: 8px;">
+								<strong>{booking.renterName}</strong> - 대여
+								종료일: {booking.rentalEndDate}
+								<button
+									onclick={() => deleteBooking(booking.id)}
+								>
+									삭제
+								</button>
+							</li>
+						{/each}
+					</ul>
+				</details>
 			{/if}
 		</div>
 	</div>
