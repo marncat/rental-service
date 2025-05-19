@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import ItemInfo from "$lib/components/item-info.svelte";
-	import { getCurrent } from "$lib/date-logic";
+	import { getCurrent, getDisabledDates } from "$lib/date-logic";
 	import flatpickr from "flatpickr";
 	import type { Instance } from "flatpickr/dist/types/instance";
 	import { onMount } from "svelte";
@@ -35,23 +35,6 @@
 	async function sync() {
 		fetchBookings();
 		fetchItems();
-	}
-
-	function getDisabledDates(bookings: RentInfo[]): string[] {
-		const dates: string[] = [];
-		for (const b of bookings) {
-			if (!b.rentalStartDate || !b.rentalEndDate) continue;
-			const start = new Date(b.rentalStartDate);
-			const end = new Date(b.rentalEndDate);
-			for (
-				let d = new Date(start);
-				d <= end;
-				d.setDate(d.getDate() + 1)
-			) {
-				dates.push(d.toISOString().slice(0, 10)); // YYYY-MM-DD 형식
-			}
-		}
-		return dates;
 	}
 
 	onMount(() => {
@@ -107,8 +90,8 @@
 						<ul style="margin-top: 0">
 							{#each bookings.get(item.id) ?? [] as booking}
 								<li>
-									<strong>{booking.renterName}</strong> - 대여
-									종료일: {booking.rentalEndDate}
+									<strong>{booking.renterName}</strong> - {booking.rentalStartDate}
+									to {booking.rentalEndDate}
 								</li>
 							{/each}
 						</ul>

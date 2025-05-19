@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import ItemInfo from "$lib/components/item-info.svelte";
-	import { getCurrent } from "$lib/date-logic";
+	import { getCurrent, getDisabledDates } from "$lib/date-logic";
+	import flatpickr from "flatpickr";
+	import type { Instance } from "flatpickr/dist/types/instance";
 	import { onMount } from "svelte";
 
 	let form = $state({ name: "", category: "" });
@@ -10,6 +12,7 @@
 	let bookings: Map<number, Booking[]> = $state(new Map());
 	let currentRents: Map<number, RentInfo> = $derived(getCurrent(bookings));
 	let waitingItems: number[] = $state([]);
+	let flatpickrs: Map<number, Instance> = new Map();
 
 	async function fetchItems() {
 		const res = await fetch("/api/items");
@@ -30,35 +33,6 @@
 		form = { name: "", category: "" };
 	}
 
-	async function returnItem(itemId: number) {
-		if (bookings.get(itemId)) {
-			const booking: Booking = bookings.get(itemId)?.shift()!;
-			await fetch(`/api/items/${itemId}`, {
-				method: "PATCH",
-				body: JSON.stringify({
-					isRented: true,
-					renterName: booking.renterName,
-					rentalStartDate: booking.rentalStartDate,
-					rentalEndDate: booking.rentalEndDate,
-				}),
-			});
-			await fetch(`/api/bookings/${booking.id}`, {
-				method: "DELETE",
-			});
-		} else {
-			await fetch(`/api/items/${itemId}`, {
-				method: "PATCH",
-				body: JSON.stringify({
-					isRented: false,
-					renterName: null,
-					rentalStartDate: null,
-					rentalEndDate: null,
-				}),
-			});
-		}
-		await sync();
-	}
-
 	async function deleteItem(itemId: number) {
 		if (confirm("정말로 이 품목을 삭제하시겠습니까?")) {
 			await fetch(`/api/items/${itemId}`, {
@@ -72,6 +46,30 @@
 	async function deleteBooking(bookingId: number) {
 		await fetch(`/api/bookings/${bookingId}`, {
 			method: "DELETE",
+		});
+		await fetchBookings();
+	}
+
+	async function updateBooking(booking: Booking, value: Date[]) {
+		const [rentalStartDateRaw, rentalEndDateRaw] = value;
+		let d1 = new Date(rentalStartDateRaw);
+		let d2 = rentalEndDateRaw ? new Date(rentalEndDateRaw) : new Date(d1);
+		d1.setDate(d1.getDate() + 1);
+		d2.setDate(d2.getDate() + 1);
+
+		// rentalStartDateRaw.setDate(rentalStartDateRaw.getDate() + 1);
+		let rentalStartDate = d1.toISOString().slice(0, 10);
+
+		let rentalEndDate = d2.toISOString().slice(0, 10);
+
+		await fetch(`api/bookings/${booking.id}`, {
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				renterName: booking.renterName,
+				rentalStartDate,
+				rentalEndDate,
+			}),
 		});
 		await fetchBookings();
 	}
@@ -149,8 +147,49 @@
 					<ul style="margin-top: 8px">
 						{#each bookings.get(item.id) ?? [] as booking}
 							<li style="margin-bottom: 8px;">
-								<strong>{booking.renterName}</strong> - 대여
-								종료일: {booking.rentalEndDate}
+								<strong>{booking.renterName}</strong>
+								<input
+									type="text"
+									name="date"
+									id={`range${item.id}-${booking.id}`}
+									value={booking.rentalStartDate ===
+									booking.rentalEndDate
+										? booking.rentalStartDate
+										: `${booking.rentalStartDate} to ${booking.rentalEndDate}`}
+									onfocus={() => {
+										if (flatpickrs.has(item.id)) {
+											const fp = flatpickrs.get(item.id);
+											fp?.destroy();
+										}
+										const fp = flatpickr(
+											`#range${item.id}-${booking.id}`,
+											{
+												mode: "range",
+												minDate: "today",
+												dateFormat: "Y-m-d",
+												disable: getDisabledDates(
+													(
+														bookings.get(item.id) ??
+														[]
+													).filter((b) => {
+														return (
+															b.id !== booking.id
+														);
+													})
+												),
+												onValueUpdate: async (
+													value
+												) => {
+													await updateBooking(
+														booking,
+														value
+													);
+												},
+											}
+										);
+										flatpickrs.set(item.id, fp as Instance);
+									}}
+								/>
 								<button
 									onclick={() => deleteBooking(booking.id)}
 								>

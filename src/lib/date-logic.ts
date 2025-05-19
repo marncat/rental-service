@@ -31,3 +31,16 @@ export function getCurrent(bookings: Map<number, RentInfo[]>) {
 	}
 	return result;
 }
+
+export function getDisabledDates(bookings: RentInfo[]): string[] {
+	const dates: string[] = [];
+	for (const b of bookings) {
+		if (!b.rentalStartDate || !b.rentalEndDate) continue;
+		const start = new Date(b.rentalStartDate);
+		const end = new Date(b.rentalEndDate);
+		for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+			dates.push(d.toISOString().slice(0, 10)); // YYYY-MM-DD 형식
+		}
+	}
+	return dates;
+}

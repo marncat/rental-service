@@ -15,7 +15,6 @@ export const actions: Actions = {
 		);
 		const rentalStartDate = rentalStartDateRaw?.trim();
 		let rentalEndDate = rentalEndDateRaw?.trim();
-		console.log(rentalEndDate);
 
 		if (!rentalEndDate) {
 			rentalEndDate = rentalStartDate;
