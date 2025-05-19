@@ -1,15 +1,14 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import ItemInfo from "$lib/components/item-info.svelte";
-	import { getCurrent, getDisabledDates } from "$lib/date-logic";
+	import { getDisabledDates, isEarlierThan } from "$lib/date-logic";
 	import flatpickr from "flatpickr";
 	import type { Instance } from "flatpickr/dist/types/instance";
 	import { onMount } from "svelte";
 
 	let items: Item[] = $state([]);
-	let bookings: Map<number, RentInfo[]> = $state(new Map());
+	let bookings: Map<number, Booking[]> = $state(new Map());
 
-	let currentRents: Map<number, RentInfo> = $derived(getCurrent(bookings));
 	let waitingItems: number[] = $state([]);
 	let flatpickrs: Map<number, Instance> = new Map();
 
@@ -23,11 +22,18 @@
 		const res = await fetch("/api/bookings");
 		const data = await res.json();
 		bookings = data.reduce(
-			(map: Map<number, RentInfo[]>, booking: BookInfo) =>
-				map.set(booking.rentingItem, [
-					...(map.get(booking.rentingItem) || []),
-					booking as RentInfo,
-				]),
+			(map: Map<number, Booking[]>, booking: Booking) => {
+				const arr = [...(map.get(booking.rentingItem) || []), booking];
+				arr.sort((a, b) =>
+					isEarlierThan(
+						new Date(a.rentalStartDate),
+						new Date(b.rentalStartDate)
+					)
+						? -1
+						: 1
+				);
+				return map.set(booking.rentingItem, arr);
+			},
 			new Map()
 		);
 	}
@@ -78,7 +84,7 @@
 				};
 			}}
 		>
-			<ItemInfo {currentRents} itemId={item.id} />
+			<ItemInfo {bookings} itemId={item.id} />
 			{#if waitingItems.includes(item.id)}
 				처리 중...
 			{:else}
@@ -90,8 +96,13 @@
 						<ul style="margin-top: 0">
 							{#each bookings.get(item.id) ?? [] as booking}
 								<li>
-									<strong>{booking.renterName}</strong> - {booking.rentalStartDate}
-									to {booking.rentalEndDate}
+									<strong>{booking.renterName}</strong> -
+									{#if booking.rentalStartDate === booking.rentalEndDate}
+										{booking.rentalStartDate}
+									{:else}
+										{booking.rentalStartDate}
+										to {booking.rentalEndDate}
+									{/if}
 								</li>
 							{/each}
 						</ul>

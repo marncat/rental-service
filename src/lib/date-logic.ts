@@ -14,25 +14,7 @@ export function isEarlierThan(firstDate: Date, secondDate: Date) {
 	);
 }
 
-export function getCurrent(bookings: Map<number, RentInfo[]>) {
-	const result = new Map();
-	const today = new Date().toISOString().slice(0, 10);
-	for (const [itemId, rents] of bookings.entries()) {
-		const current = rents.find(
-			(r) =>
-				r.rentalStartDate &&
-				r.rentalEndDate &&
-				r.rentalStartDate <= today &&
-				r.rentalEndDate >= today
-		);
-		if (current) {
-			result.set(itemId, current);
-		}
-	}
-	return result;
-}
-
-export function getDisabledDates(bookings: RentInfo[]): string[] {
+export function getDisabledDates(bookings: Booking[]): string[] {
 	const dates: string[] = [];
 	for (const b of bookings) {
 		if (!b.rentalStartDate || !b.rentalEndDate) continue;

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import ItemInfo from "$lib/components/item-info.svelte";
-	import { getCurrent, getDisabledDates } from "$lib/date-logic";
+	import { getDisabledDates, isEarlierThan } from "$lib/date-logic";
 	import flatpickr from "flatpickr";
 	import type { Instance } from "flatpickr/dist/types/instance";
 	import { onMount } from "svelte";
@@ -10,7 +10,6 @@
 	let items: Item[] = $state([]);
 
 	let bookings: Map<number, Booking[]> = $state(new Map());
-	let currentRents: Map<number, RentInfo> = $derived(getCurrent(bookings));
 	let waitingItems: number[] = $state([]);
 	let flatpickrs: Map<number, Instance> = new Map();
 
@@ -43,11 +42,16 @@
 		}
 	}
 
-	async function deleteBooking(bookingId: number) {
+	async function deleteBooking(bookingId: number, isReturning: boolean) {
 		await fetch(`/api/bookings/${bookingId}`, {
 			method: "DELETE",
 		});
 		await fetchBookings();
+		if (isReturning) {
+			alert("품목이 반납 처리되었습니다.");
+		} else {
+			alert("예약이 삭제되었습니다.");
+		}
 	}
 
 	async function updateBooking(booking: Booking, value: Date[]) {
@@ -78,11 +82,18 @@
 		const res = await fetch("/api/bookings");
 		const data = await res.json();
 		bookings = data.reduce(
-			(map: Map<number, Booking[]>, booking: Booking) =>
-				map.set(booking.rentingItem, [
-					...(map.get(booking.rentingItem) || []),
-					booking,
-				]),
+			(map: Map<number, Booking[]>, booking: Booking) => {
+				const arr = [...(map.get(booking.rentingItem) || []), booking];
+				arr.sort((a, b) =>
+					isEarlierThan(
+						new Date(a.rentalStartDate),
+						new Date(b.rentalStartDate)
+					)
+						? -1
+						: 1
+				);
+				return map.set(booking.rentingItem, arr);
+			},
 			new Map()
 		);
 	}
@@ -131,8 +142,7 @@
 			처리 중...
 		{:else}
 			<div style="margin-top: 8px;">
-				<ItemInfo {currentRents} itemId={item.id} />
-				<button onclick={() => deleteItem(item.id)}>삭제</button>
+				<ItemInfo {bookings} itemId={item.id} />
 			</div>
 		{/if}
 		<div>
@@ -145,7 +155,7 @@
 							.length}</summary
 					>
 					<ul style="margin-top: 8px">
-						{#each bookings.get(item.id) ?? [] as booking}
+						{#each bookings.get(item.id) ?? [] as booking, idx}
 							<li style="margin-bottom: 8px;">
 								<strong>{booking.renterName}</strong>
 								<input
@@ -190,16 +200,30 @@
 										flatpickrs.set(item.id, fp as Instance);
 									}}
 								/>
-								<button
-									onclick={() => deleteBooking(booking.id)}
-								>
-									삭제
-								</button>
+								{#if !isEarlierThan(new Date(), new Date(bookings
+											.get(item.id)
+											?.at(0)!.rentalStartDate!)) && idx === 0}
+									<button
+										class="return-btn"
+										onclick={() =>
+											deleteBooking(booking.id, true)}
+									>
+										반납
+									</button>
+								{:else}
+									<button
+										onclick={() =>
+											deleteBooking(booking.id, false)}
+									>
+										삭제
+									</button>
+								{/if}
 							</li>
 						{/each}
 					</ul>
 				</details>
 			{/if}
+			<button onclick={() => deleteItem(item.id)}>품목 삭제</button>
 		</div>
 	</div>
 {/each}
@@ -230,6 +254,15 @@
 		font-size: 0.9rem;
 		cursor: pointer;
 		transition: background-color 0.3s ease;
+	}
+
+	button.return-btn {
+		background-color: gold;
+		transition: background-color 0.2s;
+	}
+
+	button.return-btn:hover {
+		background-color: #ffb800;
 	}
 
 	input:focus {
